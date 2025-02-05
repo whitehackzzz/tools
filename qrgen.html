@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .wrapper {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 1s ease;
+            max-width: 90%;
+            width: 600px;
+        }
+        .form-container {
+            flex: 1;
+            text-align: center;
+        }
+        .qr-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            min-width: 250px;
+        }
+        input, select, button, label {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        @media (max-width: 768px) {
+            .wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            .qr-container {
+                margin-top: 20px;
+            }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="wrapper animate__animated animate__fadeIn">
+        <div class="form-container">
+            <h1>QR Code Generator</h1>
+            <select id="qr-type" onchange="updateInputPlaceholder()">
+                <option value="url">Website URL</option>
+                <option value="text">Text</option>
+                <option value="email">Email</option>
+                <option value="phone">Phone Number</option>
+                <option value="sms">SMS</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="wifi">WiFi</option>
+                <option value="vcard">VCard</option>
+            </select>
+            <input type="text" id="qr-input" placeholder="Enter data here" oninput="generateQRCode()">
+            
+            <!-- WiFi options -->
+            <div id="wifi-options" style="display: none;">
+                <input type="text" id="wifi-ssid" placeholder="WiFi SSID" oninput="generateQRCode()">
+                <input type="password" id="wifi-password" placeholder="WiFi Password" oninput="generateQRCode()">
+                <select id="wifi-encryption" onchange="generateQRCode()">
+                    <option value="WPA">WPA</option>
+                    <option value="WEP">WEP</option>
+                    <option value="nopass">No Password</option>
+                </select>
+            </div>
+
+            <!-- VCard options -->
+            <div id="vcard-options" style="display: none;">
+                <input type="text" id="vcard-name" placeholder="Full Name" oninput="generateQRCode()">
+                <input type="text" id="vcard-phone1" placeholder="Phone Number 1" oninput="generateQRCode()">
+                <input type="text" id="vcard-phone2" placeholder="Phone Number 2" oninput="generateQRCode()">
+                <input type="text" id="vcard-phone3" placeholder="Phone Number 3" oninput="generateQRCode()">
+                <input type="email" id="vcard-email" placeholder="Email" oninput="generateQRCode()">
+                <input type="url" id="vcard-website" placeholder="Website" oninput="generateQRCode()">
+            </div>
+
+            <label>QR Color:</label>
+            <input type="color" id="qr-color" value="#000000" onchange="generateQRCode()">
+            
+            <label>Background Color:</label>
+            <input type="color" id="qr-bg-color" value="#ffffff" onchange="generateQRCode()">
+            
+            <button onclick="generateQRCode()">Generate QR Code</button>
+            <button onclick="downloadQRCode()">Download QR</button>
+        </div>
+        <div class="qr-container">
+            <div id="qr-code"></div>
+        </div>
+    </div>
+
+    <script>
+        let qrText = "";  // Variable to store the QR text
+
+        function updateInputPlaceholder() {
+            var qrType = document.getElementById("qr-type").value;
+            var qrInput = document.getElementById("qr-input");
+            var wifiOptions = document.getElementById("wifi-options");
+            var vcardOptions = document.getElementById("vcard-options");
+
+            qrInput.style.display = "block";
+            wifiOptions.style.display = "none";
+            vcardOptions.style.display = "none";
+
+            switch (qrType) {
+                case "url":
+                    qrInput.placeholder = "Enter Website URL";
+                    break;
+                case "text":
+                    qrInput.placeholder = "Enter Text";
+                    break;
+                case "email":
+                    qrInput.placeholder = "Enter Email Address";
+                    break;
+                case "phone":
+                    qrInput.placeholder = "Enter Phone Number";
+                    break;
+                case "sms":
+                    qrInput.placeholder = "Enter Phone Number for SMS";
+                    break;
+                case "whatsapp":
+                    qrInput.placeholder = "Enter WhatsApp Number (with country code)";
+                    break;
+                case "wifi":
+                    qrInput.style.display = "none";
+                    wifiOptions.style.display = "block";
+                    break;
+                case "vcard":
+                    qrInput.style.display = "none";
+                    vcardOptions.style.display = "block";
+                    break;
+            }
+            generateQRCode();
+        }
+
+        function generateQRCode() {
+            var qrElement = document.getElementById("qr-code");
+            qrElement.innerHTML = "";  // Clear previous QR code
+            var qrType = document.getElementById("qr-type").value;
+            var qrColor = document.getElementById("qr-color").value;
+            var qrBgColor = document.getElementById("qr-bg-color").value;
+            var qrTextValue = "";
+
+            if (qrType === "wifi") {
+                var ssid = document.getElementById("wifi-ssid").value;
+                var password = document.getElementById("wifi-password").value;
+                var encryption = document.getElementById("wifi-encryption").value;
+                qrTextValue = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
+            } else if (qrType === "vcard") {
+                var name = document.getElementById("vcard-name").value;
+                var phone1 = document.getElementById("vcard-phone1").value;
+                var phone2 = document.getElementById("vcard-phone2").value;
+                var phone3 = document.getElementById("vcard-phone3").value;
+                var email = document.getElementById("vcard-email").value;
+                var website = document.getElementById("vcard-website").value;
+                qrTextValue = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL:${phone1}\nTEL:${phone2}\nTEL:${phone3}\nEMAIL:${email}\nURL:${website}\nEND:VCARD`;
+            } else {
+                var inputValue = document.getElementById("qr-input").value;
+                switch (qrType) {
+                    case "url":
+                        qrTextValue = inputValue.startsWith("http") ? inputValue : `https://${inputValue}`;
+                        break;
+                    case "email":
+                        qrTextValue = `mailto:${inputValue}`;
+                        break;
+                    case "phone":
+                        qrTextValue = `tel:${inputValue}`;
+                        break;
+                    case "sms":
+                        qrTextValue = `sms:${inputValue}`;
+                        break;
+                    case "whatsapp":
+                        qrTextValue = `https://wa.me/${inputValue}`;
+                        break;
+                    default:
+                        qrTextValue = inputValue;
+                }
+            }
+
+            qrText = qrTextValue;  // Store the QR text for download
+            // Generate preview QR code (300x300)
+            new QRCode(qrElement, {
+                text: qrTextValue,
+                width: 300,
+                height: 300,
+                colorDark: qrColor,
+                colorLight: qrBgColor
+            });
+        }
+
+        function downloadQRCode() {
+            if (!qrText) {
+                alert("Please generate a QR Code first.");
+                return;
+            }
+
+            // Create a new QRCode object for the 3000x3000 resolution
+            var downloadQRCode = new QRCode(document.createElement('div'), {
+                text: qrText,
+                width: 3000,
+                height: 3000,
+                colorDark: document.getElementById("qr-color").value,
+                colorLight: document.getElementById("qr-bg-color").value
+            });
+
+            // Get the canvas of the generated QR code and create the download link
+            var qrCanvas = downloadQRCode._oDrawing._elCanvas;
+            var dataUrl = qrCanvas.toDataURL("image/png");
+
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'qr_code_3000x3000.png';
+            a.click();
+        }
+
+        document.addEventListener("DOMContentLoaded", updateInputPlaceholder);
+    </script>
+</body>
+</html>
