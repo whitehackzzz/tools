@@ -15,6 +15,7 @@
             background: linear-gradient(135deg, #e0c3fc, #8ec5fc);
             padding: 20px;
             box-sizing: border-box;
+            margin: 0;
         }
         .wrapper {
             display: flex;
@@ -23,10 +24,10 @@
             background: white;
             padding: 20px;
             border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             animation: fadeIn 1s ease;
             max-width: 90%;
-            width: 600px;
+            width: 700px;
         }
         .form-container {
             flex: 1;
@@ -34,6 +35,7 @@
         }
         .qr-container {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             background: white;
@@ -42,21 +44,35 @@
             min-width: 250px;
         }
         input, select, button, label {
-            padding: 10px;
+            padding: 12px;
             margin: 10px 0;
             width: 100%;
             border-radius: 5px;
             border: 1px solid #ccc;
             box-sizing: border-box;
+            font-size: 16px;
         }
         button {
             background-color: #4CAF50;
             color: white;
             border: none;
             cursor: pointer;
+            font-weight: bold;
         }
         button:hover {
             background-color: #45a049;
+        }
+        .add-btn {
+            background-color: #007BFF;
+        }
+        .add-btn:hover {
+            background-color: #0056b3;
+        }
+        .remove-btn {
+            background-color: #dc3545;
+        }
+        .remove-btn:hover {
+            background-color: #c82333;
         }
         @media (max-width: 768px) {
             .wrapper {
@@ -82,10 +98,10 @@
                 <option value="sms">SMS</option>
                 <option value="whatsapp">WhatsApp</option>
                 <option value="wifi">WiFi</option>
-                <option value="vcard">VCard</option>
+                <option value="vcard">vCard</option>
             </select>
             <input type="text" id="qr-input" placeholder="Enter data here" oninput="generateQRCode()">
-            
+
             <!-- WiFi options -->
             <div id="wifi-options" style="display: none;">
                 <input type="text" id="wifi-ssid" placeholder="WiFi SSID" oninput="generateQRCode()">
@@ -97,24 +113,28 @@
                 </select>
             </div>
 
-            <!-- VCard options -->
+            <!-- vCard options -->
             <div id="vcard-options" style="display: none;">
                 <input type="text" id="vcard-name" placeholder="Full Name" oninput="generateQRCode()">
+                <input type="text" id="vcard-company" placeholder="Company Name" oninput="generateQRCode()">
+                <input type="text" id="vcard-address" placeholder="Address" oninput="generateQRCode()">
                 <input type="text" id="vcard-phone1" placeholder="Phone Number 1" oninput="generateQRCode()">
-                <input type="text" id="vcard-phone2" placeholder="Phone Number 2" oninput="generateQRCode()">
-                <input type="text" id="vcard-phone3" placeholder="Phone Number 3" oninput="generateQRCode()">
+                <div id="extra-phones"></div>
+                <button type="button" class="add-btn" onclick="addPhoneNumber()">Add Phone Number</button>
                 <input type="email" id="vcard-email" placeholder="Email" oninput="generateQRCode()">
                 <input type="url" id="vcard-website" placeholder="Website" oninput="generateQRCode()">
             </div>
 
-            <label>QR Color:</label>
-            <input type="color" id="qr-color" value="#000000" onchange="generateQRCode()">
-            
-            <label>Background Color:</label>
-            <input type="color" id="qr-bg-color" value="#ffffff" onchange="generateQRCode()">
-            
-            <button onclick="generateQRCode()">Generate QR Code</button>
-            <button onclick="downloadQRCode()">Download QR</button>
+            <div class="qr-customization">
+                <label>QR Color:</label>
+                <input type="color" id="qr-color" value="#000000" onchange="generateQRCode()">
+                
+                <label>Background Color:</label>
+                <input type="color" id="qr-bg-color" value="#ffffff" onchange="generateQRCode()">
+                
+                <button onclick="generateQRCode()">Generate QR Code</button>
+                <button onclick="downloadQRCode()">Download QR</button>
+            </div>
         </div>
         <div class="qr-container">
             <div id="qr-code"></div>
@@ -165,6 +185,30 @@
             generateQRCode();
         }
 
+        function addPhoneNumber() {
+            let extraPhonesDiv = document.getElementById('extra-phones');
+            let phoneCount = extraPhonesDiv.children.length / 2;
+            
+            if (phoneCount < 2) {  // Allow up to 3 phone numbers
+                let phoneDiv = document.createElement('div');
+                let phoneInput = document.createElement('input');
+                phoneInput.type = 'text';
+                phoneInput.placeholder = `Phone Number ${phoneCount + 2}`;
+                phoneInput.oninput = generateQRCode;
+                phoneDiv.appendChild(phoneInput);
+
+                let removeButton = document.createElement('button');
+                removeButton.classList.add('remove-btn');
+                removeButton.textContent = 'Remove';
+                removeButton.onclick = () => {
+                    phoneDiv.remove();
+                    generateQRCode();
+                };
+                phoneDiv.appendChild(removeButton);
+                extraPhonesDiv.appendChild(phoneDiv);
+            }
+        }
+
         function generateQRCode() {
             var qrElement = document.getElementById("qr-code");
             qrElement.innerHTML = "";  // Clear previous QR code
@@ -180,12 +224,15 @@
                 qrTextValue = `WIFI:S:${ssid};T:${encryption};P:${password};;`;
             } else if (qrType === "vcard") {
                 var name = document.getElementById("vcard-name").value;
+                var company = document.getElementById("vcard-company").value;
+                var address = document.getElementById("vcard-address").value;
                 var phone1 = document.getElementById("vcard-phone1").value;
-                var phone2 = document.getElementById("vcard-phone2").value;
-                var phone3 = document.getElementById("vcard-phone3").value;
+                var phone2 = document.getElementById("vcard-phone2") ? document.getElementById("vcard-phone2").value : '';
+                var phone3 = document.getElementById("vcard-phone3") ? document.getElementById("vcard-phone3").value : '';
                 var email = document.getElementById("vcard-email").value;
                 var website = document.getElementById("vcard-website").value;
-                qrTextValue = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nTEL:${phone1}\nTEL:${phone2}\nTEL:${phone3}\nEMAIL:${email}\nURL:${website}\nEND:VCARD`;
+
+                qrTextValue = `BEGIN:VCARD\nVERSION:3.0\nFN:${name}\nORG:${company}\nADR:${address}\nTEL:${phone1}\nTEL:${phone2}\nTEL:${phone3}\nEMAIL:${email}\nURL:${website}\nEND:VCARD`;
             } else {
                 var inputValue = document.getElementById("qr-input").value;
                 switch (qrType) {
@@ -204,48 +251,36 @@
                     case "whatsapp":
                         qrTextValue = `https://wa.me/${inputValue}`;
                         break;
-                    default:
+                    case "text":
                         qrTextValue = inputValue;
+                        break;
                 }
             }
 
-            qrText = qrTextValue;  // Store the QR text for download
-            // Generate preview QR code (300x300)
-            new QRCode(qrElement, {
+            // Create and display the QR code
+            var qrcode = new QRCode(qrElement, {
                 text: qrTextValue,
-                width: 300,
-                height: 300,
+                width: 256,
+                height: 256,
                 colorDark: qrColor,
-                colorLight: qrBgColor
+                colorLight: qrBgColor,
+                correctLevel: QRCode.CorrectLevel.H
             });
         }
 
         function downloadQRCode() {
-            if (!qrText) {
-                alert("Please generate a QR Code first.");
-                return;
-            }
-
-            // Create a new QRCode object for the 3000x3000 resolution
-            var downloadQRCode = new QRCode(document.createElement('div'), {
-                text: qrText,
-                width: 3000,
-                height: 3000,
-                colorDark: document.getElementById("qr-color").value,
-                colorLight: document.getElementById("qr-bg-color").value
-            });
-
-            // Get the canvas of the generated QR code and create the download link
-            var qrCanvas = downloadQRCode._oDrawing._elCanvas;
-            var dataUrl = qrCanvas.toDataURL("image/png");
-
-            var a = document.createElement('a');
-            a.href = dataUrl;
-            a.download = 'qr_code_3000x3000.png';
-            a.click();
+            var qrElement = document.getElementById("qr-code").querySelector("img");
+            var qrImage = qrElement.src;
+            var link = document.createElement('a');
+            link.href = qrImage;
+            link.download = 'qrcode.png';
+            link.click();
         }
 
-        document.addEventListener("DOMContentLoaded", updateInputPlaceholder);
+        // Initialize with URL type
+        window.onload = function () {
+            updateInputPlaceholder();
+        }
     </script>
 </body>
 </html>
