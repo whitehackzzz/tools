@@ -35,7 +35,6 @@
         }
         .qr-container {
             display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
             background: white;
@@ -125,16 +124,14 @@
                 <input type="url" id="vcard-website" placeholder="Website" oninput="generateQRCode()">
             </div>
 
-            <div class="qr-customization">
-                <label>QR Color:</label>
-                <input type="color" id="qr-color" value="#000000" onchange="generateQRCode()">
-                
-                <label>Background Color:</label>
-                <input type="color" id="qr-bg-color" value="#ffffff" onchange="generateQRCode()">
-                
-                <button onclick="generateQRCode()">Generate QR Code</button>
-                <button onclick="downloadQRCode()">Download QR</button>
-            </div>
+            <label>QR Color:</label>
+            <input type="color" id="qr-color" value="#000000" onchange="generateQRCode()">
+            
+            <label>Background Color:</label>
+            <input type="color" id="qr-bg-color" value="#ffffff" onchange="generateQRCode()">
+            
+            <button onclick="generateQRCode()">Generate QR Code</button>
+            <button onclick="downloadQRCode()">Download QR</button>
         </div>
         <div class="qr-container">
             <div id="qr-code"></div>
@@ -251,36 +248,50 @@
                     case "whatsapp":
                         qrTextValue = `https://wa.me/${inputValue}`;
                         break;
-                    case "text":
+                    default:
                         qrTextValue = inputValue;
-                        break;
                 }
             }
 
-            // Create and display the QR code
-            var qrcode = new QRCode(qrElement, {
+            qrText = qrTextValue;  // Store the QR text for download
+            // Generate preview QR code (300x300)
+            new QRCode(qrElement, {
                 text: qrTextValue,
-                width: 256,
-                height: 256,
+                width: 300,
+                height: 300,
                 colorDark: qrColor,
-                colorLight: qrBgColor,
-                correctLevel: QRCode.CorrectLevel.H
+                colorLight: qrBgColor
             });
         }
 
         function downloadQRCode() {
-            var qrElement = document.getElementById("qr-code").querySelector("img");
-            var qrImage = qrElement.src;
-            var link = document.createElement('a');
-            link.href = qrImage;
-            link.download = 'qrcode.png';
-            link.click();
+            if (!qrText) {
+                alert("Please generate a QR Code first.");
+                return;
+            }
+
+            // Create a new QRCode object for the 3000x3000 resolution
+            var downloadQRCode = new QRCode(document.createElement('div'), {
+                text: qrText,
+                width: 3000,
+                height: 3000,
+                colorDark: document.getElementById("qr-color").value,
+                colorLight: document.getElementById("qr-bg-color").value
+            });
+
+            // Get the canvas of the generated QR code and create the download link
+            var qrCanvas = downloadQRCode._oDrawing._elCanvas;
+            var dataUrl = qrCanvas.toDataURL("image/png");
+
+            var a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = 'qr_code_3000x3000.png';
+            a.click();
         }
 
-        // Initialize with URL type
-        window.onload = function () {
-            updateInputPlaceholder();
-        }
+        document.addEventListener("DOMContentLoaded", function() {
+            generateQRCode();
+        });
     </script>
 </body>
 </html>
